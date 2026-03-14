@@ -3,7 +3,7 @@ import { Hooks } from './hooks'
 
 const app = new Hono()
 
-app.get('/', (c) => {
+app.get('/webhook', (c) => {
     return c.text('Pong!')
 })
 
@@ -14,9 +14,8 @@ app.post('/webhook/github', async (c) => {
         if (event === 'ping') {
             const body = await c.req.json()
             const repoName = body.repository?.full_name || 'unknown'
-            const visibility = body.repository?.private ? 'Private' : 'Public'
-            const msg = `connected to repo ${repoName} (${visibility})`
-            console.log(`GitHub Ping received for: ${repoName} (${visibility})`)
+            const msg = `connected to github repository: *${repoName}*`
+            console.log(`GitHub Ping received for: ${repoName}`)
             await Hooks.sendMessage(msg)
             return c.text(msg)
         }
@@ -35,13 +34,11 @@ app.post('/webhook/bitbucket', async (c) => {
     try {
         const event = c.req.header('X-Event-Key')
         
-        // BitBucket diagnostic check (if supported by the hook version or manual test)
         if (event === 'diagnostic:ping') {
             const body = await c.req.json()
             const repoName = body.repository?.full_name || 'unknown'
-            const visibility = body.repository?.is_private ? 'Private' : 'Public'
-            const msg = `connected to bitbucket repo ${repoName} (${visibility})`
-            console.log(`BitBucket Ping received for: ${repoName} (${visibility})`)
+            const msg = `connected to bitbucket repository: *${repoName}*`
+            console.log(`BitBucket Ping received for: ${repoName}`)
             await Hooks.sendMessage(msg)
             return c.text(msg)
         }
