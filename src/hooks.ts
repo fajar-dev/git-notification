@@ -130,8 +130,8 @@ export class Hooks {
             "header": {
                 "title": "BitBucket Push Notification",
                 "subtitle": `<b>${repository.full_name || 'Unknown Repository'}</b> (<code>${repository.is_private ? 'private' : 'public'}</code>)`,
-                "imageUrl": "https://wac-cdn.atlassian.com/dam/jcr:e2f4d603-5cd7-48ef-89e4-89791443c9b4/bitbucket-mark-gradient.png",
-                "imageType": "SQUARE"
+                "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpxEQ0uIkbMszowTDvYTnCamahLRDwajS4Kg&s",
+                "imageType": "CIRCLE"
             },
             "sections": [
                 {
