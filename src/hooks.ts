@@ -32,6 +32,19 @@ export class Hooks {
     }
 
     /**
+     * Send a simple text message to Google Chat
+     */
+    static async sendMessage(text: string) {
+        try {
+            const response = await this.http.post("", { text });
+            return response.data;
+        } catch (error) {
+            console.error("Error sending text message to Google Chat:", error);
+            throw error;
+        }
+    }
+
+    /**
      * GitHub Notification (Real Data from Webhook)
      */
     static async sendGitHubNotification(payload: any) {

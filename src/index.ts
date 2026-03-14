@@ -9,6 +9,18 @@ app.get('/', (c) => {
 
 app.post('/webhook/github', async (c) => {
     try {
+        const event = c.req.header('X-GitHub-Event')
+        
+        if (event === 'ping') {
+            const body = await c.req.json()
+            const repoName = body.repository?.full_name || 'unknown'
+            const visibility = body.repository?.private ? 'Private' : 'Public'
+            const msg = `connected to repo ${repoName} (${visibility})`
+            console.log(`GitHub Ping received for: ${repoName} (${visibility})`)
+            await Hooks.sendMessage(msg)
+            return c.text(msg)
+        }
+
         const body = await c.req.json()
         console.log("GitHub Webhook Body received")
         await Hooks.sendGitHubNotification(body)
@@ -21,6 +33,19 @@ app.post('/webhook/github', async (c) => {
 
 app.post('/webhook/bitbucket', async (c) => {
     try {
+        const event = c.req.header('X-Event-Key')
+        
+        // BitBucket diagnostic check (if supported by the hook version or manual test)
+        if (event === 'diagnostic:ping') {
+            const body = await c.req.json()
+            const repoName = body.repository?.full_name || 'unknown'
+            const visibility = body.repository?.is_private ? 'Private' : 'Public'
+            const msg = `connected to bitbucket repo ${repoName} (${visibility})`
+            console.log(`BitBucket Ping received for: ${repoName} (${visibility})`)
+            await Hooks.sendMessage(msg)
+            return c.text(msg)
+        }
+
         const body = await c.req.json()
         console.log("BitBucket Webhook Body received")
         await Hooks.sendBitBucketNotification(body)
