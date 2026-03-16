@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { Hooks } from './hooks'
+import { PORT } from './config'
 
 const app = new Hono()
 
@@ -53,4 +54,7 @@ app.post('/webhook/bitbucket', async (c) => {
     }
 })
 
-export default app
+export default {
+    port: PORT,
+    fetch: app.fetch,
+}
