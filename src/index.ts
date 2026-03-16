@@ -4,7 +4,7 @@ import { PORT } from './config'
 
 const app = new Hono()
 
-app.get('/webhook', (c) => {
+app.get('/webhook/', (c) => {
     return c.text('Pong!')
 })
 
