@@ -1,28 +1,31 @@
-import axios, { AxiosInstance } from "axios";
-import { GOOGLE_CHAT_WEBHOOK } from "./config";
+import axios from "axios";
+import { BIS_GOOGLE_CHAT_WEBHOOK, GOOGLE_CHAT_WEBHOOK, HRIS_GOOGLE_CHAT_WEBHOOK } from "./config";
 
 export class Hooks {
-    private static readonly webhookUrl = GOOGLE_CHAT_WEBHOOK;
-
-    private static readonly http: AxiosInstance = axios.create({
-        baseURL: this.webhookUrl,
-        headers: {
-            "Content-Type": "application/json; charset=UTF-8",
-        },
-    });
+    /**
+     * Helper to get the correct webhook URL based on the space
+     */
+    private static getWebhookUrl(space?: string): string {
+        if (space === 'bis') return BIS_GOOGLE_CHAT_WEBHOOK || '';
+        if (space === 'hris') return HRIS_GOOGLE_CHAT_WEBHOOK || '';
+        return GOOGLE_CHAT_WEBHOOK || '';
+    }
 
     /**
      * Helper to send the card to Google Chat
      */
-    private static async postToChat(card: any) {
+    private static async postToChat(card: any, space?: string) {
         try {
-            const response = await this.http.post("", {
+            const url = this.getWebhookUrl(space);
+            const response = await axios.post(url, {
                 "cardsV2": [
                     {
                         "cardId": `notif-${Date.now()}`,
                         "card": card
                     }
                 ]
+            }, {
+                headers: { "Content-Type": "application/json; charset=UTF-8" }
             });
             return response.data;
         } catch (error) {
@@ -34,9 +37,12 @@ export class Hooks {
     /**
      * Send a simple text message to Google Chat
      */
-    static async sendMessage(text: string) {
+    static async sendMessage(text: string, space?: string) {
         try {
-            const response = await this.http.post("", { text });
+            const url = this.getWebhookUrl(space);
+            const response = await axios.post(url, { text }, {
+                headers: { "Content-Type": "application/json; charset=UTF-8" }
+            });
             return response.data;
         } catch (error) {
             console.error("Error sending text message to Google Chat:", error);
@@ -47,7 +53,7 @@ export class Hooks {
     /**
      * GitHub Notification (Real Data from Webhook)
      */
-    static async sendGitHubNotification(payload: any) {
+    static async sendGitHubNotification(payload: any, space?: string) {
         const repository = payload.repository || {};
         const pusher = payload.pusher || {};
         const sender = payload.sender || {};
@@ -118,13 +124,13 @@ export class Hooks {
             ]
         };
 
-        return this.postToChat(card);
+        return this.postToChat(card, space);
     }
 
     /**
      * BitBucket Notification (Real Data from Webhook)
      */
-    static async sendBitBucketNotification(payload: any) {
+    static async sendBitBucketNotification(payload: any, space?: string) {
         const repository = payload.repository || {};
         const actor = payload.actor || {};
         const push = payload.push || {};
@@ -195,6 +201,6 @@ export class Hooks {
             ]
         };
 
-        return this.postToChat(card);
+        return this.postToChat(card, space);
     }
 }
