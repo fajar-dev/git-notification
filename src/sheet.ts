@@ -9,9 +9,6 @@ const HEADERS = [
     'Author',
     'Branch',
     'URL',
-    'Files Added',
-    'Files Removed',
-    'Files Modified',
 ]
 
 export interface CommitLog {
@@ -21,9 +18,6 @@ export interface CommitLog {
     author: string
     branch: string
     url: string
-    filesAdded: number
-    filesRemoved: number
-    filesModified: number
 }
 
 export class Spreadsheet {
@@ -44,7 +38,7 @@ export class Spreadsheet {
 
     private static sanitizeSheetName(name: string): string {
         // Google Sheets tab name cannot contain: \ / ? * [ ]
-        return name.replace(/[\\/?*[\]]/g, '-').substring(0, 100)
+        return name.replace(/[\\?*[\]]/g, '').replace(/\//g, '.').substring(0, 100)
     }
 
     private static async getOrCreateSheet(repoName: string) {
@@ -66,18 +60,18 @@ export class Spreadsheet {
             const rows = await sheet.getRows()
             const existingIds = new Set(rows.map(row => row.get('Commit ID')))
 
+            const requiredFields: (keyof CommitLog)[] = ['commitId', 'timestamp', 'message', 'author', 'branch', 'url']
+
             const newRows = commits
+                .filter(c => requiredFields.every(f => c[f]?.trim()))
                 .filter(c => !existingIds.has(c.commitId))
                 .map(c => ({
-                    'Commit ID':      c.commitId,
-                    'Timestamp':      c.timestamp,
-                    'Message':        c.message,
-                    'Author':         c.author,
-                    'Branch':         c.branch,
-                    'URL':            c.url,
-                    'Files Added':    c.filesAdded,
-                    'Files Removed':  c.filesRemoved,
-                    'Files Modified': c.filesModified,
+                    'Commit ID': c.commitId,
+                    'Timestamp': c.timestamp,
+                    'Message':   c.message,
+                    'Author':    c.author,
+                    'Branch':    c.branch,
+                    'URL':       c.url,
                 }))
 
             if (newRows.length > 0) {
