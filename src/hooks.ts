@@ -1,5 +1,6 @@
 import axios from "axios";
 import { GOOGLE_CHAT_WEBHOOK } from "./config";
+import type { CommitLog } from "./sheet";
 
 export class Hooks {
     /**
@@ -123,6 +124,43 @@ export class Hooks {
         };
 
         return this.postToChat(card);
+    }
+
+    static extractGitHubCommits(payload: any): CommitLog[] {
+        const branch = payload.ref ? payload.ref.replace("refs/heads/", "") : "N/A"
+        const commits: any[] = payload.commits || []
+
+        return commits.map((commit: any) => ({
+            commitId:      commit.id || '',
+            timestamp:     commit.timestamp || '',
+            message:       commit.message || '',
+            author:        commit.author?.name || '',
+            branch,
+            url:           commit.url || '',
+            filesAdded:    (commit.added || []).length,
+            filesRemoved:  (commit.removed || []).length,
+            filesModified: (commit.modified || []).length,
+        }))
+    }
+
+    static extractBitBucketCommits(payload: any): CommitLog[] {
+        const changes: any[] = payload.push?.changes || []
+
+        return changes.map((change: any) => {
+            const branch = change.new?.name || 'N/A'
+            const commit = change.new?.target || {}
+            return {
+                commitId:      commit.hash || '',
+                timestamp:     commit.date || '',
+                message:       (commit.message || '').trim(),
+                author:        commit.author?.raw || '',
+                branch,
+                url:           commit.links?.html?.href || '',
+                filesAdded:    0,
+                filesRemoved:  0,
+                filesModified: 0,
+            }
+        })
     }
 
     /**
