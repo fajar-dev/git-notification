@@ -1,22 +1,20 @@
 import axios from "axios";
-import { BIS_GOOGLE_CHAT_WEBHOOK, GOOGLE_CHAT_WEBHOOK, HRIS_GOOGLE_CHAT_WEBHOOK } from "./config";
+import { GOOGLE_CHAT_WEBHOOK } from "./config";
 
 export class Hooks {
     /**
      * Helper to get the correct webhook URL based on the space
      */
-    private static getWebhookUrl(space?: string): string {
-        if (space === 'bis') return BIS_GOOGLE_CHAT_WEBHOOK || '';
-        if (space === 'hris') return HRIS_GOOGLE_CHAT_WEBHOOK || '';
+    private static getWebhookUrl(): string {
         return GOOGLE_CHAT_WEBHOOK || '';
     }
 
     /**
      * Helper to send the card to Google Chat
      */
-    private static async postToChat(card: any, space?: string) {
+    private static async postToChat(card: any) {
         try {
-            const url = this.getWebhookUrl(space);
+            const url = this.getWebhookUrl();
             const response = await axios.post(url, {
                 "cardsV2": [
                     {
@@ -37,9 +35,9 @@ export class Hooks {
     /**
      * Send a simple text message to Google Chat
      */
-    static async sendMessage(text: string, space?: string) {
+    static async sendMessage(text: string) {
         try {
-            const url = this.getWebhookUrl(space);
+            const url = this.getWebhookUrl();
             const response = await axios.post(url, { text }, {
                 headers: { "Content-Type": "application/json; charset=UTF-8" }
             });
@@ -124,7 +122,7 @@ export class Hooks {
             ]
         };
 
-        return this.postToChat(card, space);
+        return this.postToChat(card);
     }
 
     /**
@@ -201,6 +199,6 @@ export class Hooks {
             ]
         };
 
-        return this.postToChat(card, space);
+        return this.postToChat(card);
     }
 }

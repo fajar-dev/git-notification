@@ -10,21 +10,20 @@ app.get('/webhook/', (c) => {
 
 app.post('/webhook/github', async (c) => {
     try {
-        const space = c.req.query('space')
         const event = c.req.header('X-GitHub-Event')
         
         if (event === 'ping') {
             const body = await c.req.json()
             const repoName = body.repository?.full_name || 'unknown'
-            const msg = `connected to github repository: *${repoName}* (${space || 'default'})`
-            console.log(`GitHub Ping received for: ${repoName} (space: ${space})`)
-            await Hooks.sendMessage(msg, space)
+            const msg = `connected to github repository: *${repoName}*)`
+            console.log(`GitHub Ping received for: ${repoName}`)
+            await Hooks.sendMessage(msg)
             return c.text(msg)
         }
 
         const body = await c.req.json()
         console.log("GitHub Webhook Body received")
-        await Hooks.sendGitHubNotification(body, space)
+        await Hooks.sendGitHubNotification(body)
         return c.json({ status: 'success', provider: 'github' })
     } catch (error) {
         console.error("GitHub Webhook Error:", error)
@@ -34,21 +33,20 @@ app.post('/webhook/github', async (c) => {
 
 app.post('/webhook/bitbucket', async (c) => {
     try {
-        const space = c.req.query('space')
         const event = c.req.header('X-Event-Key')
         
         if (event === 'diagnostic:ping') {
             const body = await c.req.json()
             const repoName = body.repository?.full_name || 'unknown'
-            const msg = `connected to bitbucket repository: *${repoName}* (${space || 'default'})`
-            console.log(`BitBucket Ping received for: ${repoName} (space: ${space})`)
-            await Hooks.sendMessage(msg, space)
+            const msg = `connected to bitbucket repository: *${repoName}*`
+            console.log(`BitBucket Ping received for: ${repoName}`)
+            await Hooks.sendMessage(msg)
             return c.text(msg)
         }
 
         const body = await c.req.json()
         console.log("BitBucket Webhook Body received")
-        await Hooks.sendBitBucketNotification(body, space)
+        await Hooks.sendBitBucketNotification(body)
         return c.json({ status: 'success', provider: 'bitbucket' })
     } catch (error) {
         console.error("BitBucket Webhook Error:", error)
