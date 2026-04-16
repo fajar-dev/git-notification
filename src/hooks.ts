@@ -150,22 +150,25 @@ export class Hooks {
     static extractBitBucketCommits(payload: any): CommitLog[] {
         const changes: any[] = payload.push?.changes || []
 
-        return changes.map((change: any) => {
+        return changes.flatMap((change: any) => {
             const branch = change.new?.name || ''
-            const commit = change.new?.target || {}
-            const rawAuthor: string = commit.author?.raw || ''
-            const author = rawAuthor.includes('<')
-                ? rawAuthor.split('<')[0].trim()
-                : rawAuthor.trim()
+            const commits: any[] = change.commits?.length ? change.commits : [change.new?.target].filter(Boolean)
 
-            return {
-                commitId:  commit.hash || '',
-                timestamp: this.formatTimestamp(commit.date || ''),
-                message:   (commit.message || '').trim(),
-                author,
-                branch,
-                url:       commit.links?.html?.href || '',
-            }
+            return commits.map((commit: any) => {
+                const rawAuthor: string = commit.author?.raw || ''
+                const author = rawAuthor.includes('<')
+                    ? rawAuthor.split('<')[0].trim()
+                    : rawAuthor.trim()
+
+                return {
+                    commitId:  commit.hash || '',
+                    timestamp: this.formatTimestamp(commit.date || ''),
+                    message:   (commit.message || '').trim(),
+                    author,
+                    branch,
+                    url:       commit.links?.html?.href || '',
+                }
+            })
         })
     }
 
@@ -185,7 +188,7 @@ export class Hooks {
         const commitDate = commit.date || "N/A";
         const commitLink = commit.links?.html?.href || "#";
         const repoLink = repository.links?.html?.href || "#";
-        const actorLink = actor.links?.html?.href || "#";
+        const actorLink = actor.links?.html?.href || "";
 
         const card = {
             "header": {
@@ -208,7 +211,7 @@ export class Hooks {
                 {
                     "header": "Repository Info",
                     "widgets": [
-                        { "decoratedText": { "topLabel": "Workspace", "text": payload.workspace?.name || "N/A" } },
+                        { "decoratedText": { "topLabel": "Workspace", "text": repository.workspace?.name || "N/A" } },
                         { "decoratedText": { "topLabel": "Actor", "text": actor.display_name || "N/A" } },
                         { "decoratedText": { "topLabel": "Project", "text": repository.name || "N/A" } }
                     ]
@@ -234,7 +237,7 @@ export class Hooks {
                             "buttonList": {
                                 "buttons": [
                                     { "text": "Open BitBucket", "onClick": { "openLink": { "url": repoLink } } },
-                                    { "text": "User Profile", "onClick": { "openLink": { "url": actorLink } } }
+                                    ...(actorLink ? [{ "text": "User Profile", "onClick": { "openLink": { "url": actorLink } } }] : [])
                                 ]
                             }
                         }
