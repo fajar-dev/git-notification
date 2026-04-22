@@ -87,7 +87,7 @@ async function sendSheetSummaryCard(
         header: {
             title:    `Weekly Summary: ${repoName}`,
             subtitle: period.label,
-            imageUrl: "https://fonts.gstatic.com/s/i/googlematerialicons/summarize/v7/24px.svg",
+            imageUrl: "https://git-scm.com/images/logos/downloads/Git-Icon-1788C.svg",
             imageType: "SQUARE",
         },
         sections: [
