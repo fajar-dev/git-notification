@@ -3,7 +3,8 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
-    "build": "bun build --minify --outfile dist/index.js --target bun src/index.ts"
+    "build": "bun build --minify --outfile dist/index.js --target bun src/index.ts",
+    "summary": "bun run src/summary-runner.ts"
   },
   "dependencies": {
     "axios": "^1.13.6",
