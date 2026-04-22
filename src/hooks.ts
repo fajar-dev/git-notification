@@ -96,7 +96,7 @@ export class Hooks {
                     "widgets": [
                         { "textParagraph": { "text": `<b>${head_commit.message || 'No message'}</b>` } },
                         { "decoratedText": { "topLabel": "Commit", "text": `<code>${(head_commit.id || '').substring(0, 7)}</code>` } },
-                        { "decoratedText": { "topLabel": "Time", "text": head_commit.timestamp || 'N/A' } },
+                        { "decoratedText": { "topLabel": "Time", "text": this.formatTimestamp(head_commit.timestamp) } },
                         { "decoratedText": { "topLabel": "Author", "text": `<b>${head_commit.author?.name || 'N/A'}</b> (${head_commit.author?.username || 'N/A'})` } },
                         {
                             "buttonList": {
@@ -130,7 +130,7 @@ export class Hooks {
         if (!ts) return ''
         const d = new Date(ts)
         if (isNaN(d.getTime())) return ts
-        return d.toISOString().replace('T', ' ').substring(0, 19)
+        return d.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace('T', ' ')
     }
 
     static extractGitHubCommits(payload: any): CommitLog[] {
@@ -141,7 +141,7 @@ export class Hooks {
             commitId:  commit.id || '',
             timestamp: this.formatTimestamp(commit.timestamp || ''),
             message:   commit.message || '',
-            author:    commit.author?.name || '',
+            author:    commit.author?.username || commit.author?.name || '',
             branch,
             url:       commit.url || '',
         }))
@@ -155,10 +155,7 @@ export class Hooks {
             const commits: any[] = change.commits?.length ? change.commits : [change.new?.target].filter(Boolean)
 
             return commits.map((commit: any) => {
-                const rawAuthor: string = commit.author?.raw || ''
-                const author = rawAuthor.includes('<')
-                    ? rawAuthor.split('<')[0].trim()
-                    : rawAuthor.trim()
+                const author = commit.author?.user?.nickname || commit.author?.user?.display_name || ''
 
                 return {
                     commitId:  commit.hash || '',
@@ -221,7 +218,7 @@ export class Hooks {
                     "widgets": [
                         { "textParagraph": { "text": `<b>${commitMessage.trim()}</b>` } },
                         { "decoratedText": { "topLabel": "Hash", "text": `<code>${commitHash.substring(0, 7)}</code>` } },
-                        { "decoratedText": { "topLabel": "Time", "text": commitDate } },
+                        { "decoratedText": { "topLabel": "Time", "text": this.formatTimestamp(commitDate) } },
                         {
                             "buttonList": {
                                 "buttons": [
