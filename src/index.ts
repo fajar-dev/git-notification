@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { Hooks } from './hooks'
+import { Spreadsheet } from './sheet'
 import { PORT } from './config'
 
 const app = new Hono()
@@ -24,6 +25,8 @@ app.post('/webhook/github', async (c) => {
         const body = await c.req.json()
         console.log("GitHub Webhook Body received")
         await Hooks.sendGitHubNotification(body)
+        const repoName = body.repository?.full_name || 'unknown'
+        Spreadsheet.logCommits(repoName, Hooks.extractGitHubCommits(body))
         return c.json({ status: 'success', provider: 'github' })
     } catch (error) {
         console.error("GitHub Webhook Error:", error)
@@ -47,6 +50,8 @@ app.post('/webhook/bitbucket', async (c) => {
         const body = await c.req.json()
         console.log("BitBucket Webhook Body received")
         await Hooks.sendBitBucketNotification(body)
+        const repoName = body.repository?.full_name || 'unknown'
+        Spreadsheet.logCommits(repoName, Hooks.extractBitBucketCommits(body))
         return c.json({ status: 'success', provider: 'bitbucket' })
     } catch (error) {
         console.error("BitBucket Webhook Error:", error)

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { GOOGLE_CHAT_WEBHOOK } from "./config";
+import type { CommitLog } from "./sheet";
 
 export class Hooks {
     /**
@@ -95,7 +96,7 @@ export class Hooks {
                     "widgets": [
                         { "textParagraph": { "text": `<b>${head_commit.message || 'No message'}</b>` } },
                         { "decoratedText": { "topLabel": "Commit", "text": `<code>${(head_commit.id || '').substring(0, 7)}</code>` } },
-                        { "decoratedText": { "topLabel": "Time", "text": head_commit.timestamp || 'N/A' } },
+                        { "decoratedText": { "topLabel": "Time", "text": this.formatTimestamp(head_commit.timestamp) } },
                         { "decoratedText": { "topLabel": "Author", "text": `<b>${head_commit.author?.name || 'N/A'}</b> (${head_commit.author?.username || 'N/A'})` } },
                         {
                             "buttonList": {
@@ -125,6 +126,49 @@ export class Hooks {
         return this.postToChat(card);
     }
 
+    private static formatTimestamp(ts: string): string {
+        if (!ts) return ''
+        const d = new Date(ts)
+        if (isNaN(d.getTime())) return ts
+        return d.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace('T', ' ')
+    }
+
+    static extractGitHubCommits(payload: any): CommitLog[] {
+        const branch = payload.ref ? payload.ref.replace("refs/heads/", "") : ''
+        const commits: any[] = payload.commits || []
+
+        return commits.map((commit: any) => ({
+            commitId:  commit.id || '',
+            timestamp: this.formatTimestamp(commit.timestamp || ''),
+            message:   commit.message || '',
+            author:    commit.author?.username || commit.author?.name || '',
+            branch,
+            url:       commit.url || '',
+        }))
+    }
+
+    static extractBitBucketCommits(payload: any): CommitLog[] {
+        const changes: any[] = payload.push?.changes || []
+
+        return changes.flatMap((change: any) => {
+            const branch = change.new?.name || ''
+            const commits: any[] = change.commits?.length ? change.commits : [change.new?.target].filter(Boolean)
+
+            return commits.map((commit: any) => {
+                const author = commit.author?.user?.nickname || commit.author?.user?.display_name || ''
+
+                return {
+                    commitId:  commit.hash || '',
+                    timestamp: this.formatTimestamp(commit.date || ''),
+                    message:   (commit.message || '').trim(),
+                    author,
+                    branch,
+                    url:       commit.links?.html?.href || '',
+                }
+            })
+        })
+    }
+
     /**
      * BitBucket Notification (Real Data from Webhook)
      */
@@ -141,7 +185,7 @@ export class Hooks {
         const commitDate = commit.date || "N/A";
         const commitLink = commit.links?.html?.href || "#";
         const repoLink = repository.links?.html?.href || "#";
-        const actorLink = actor.links?.html?.href || "#";
+        const actorLink = actor.links?.html?.href || "";
 
         const card = {
             "header": {
@@ -164,7 +208,7 @@ export class Hooks {
                 {
                     "header": "Repository Info",
                     "widgets": [
-                        { "decoratedText": { "topLabel": "Workspace", "text": payload.workspace?.name || "N/A" } },
+                        { "decoratedText": { "topLabel": "Workspace", "text": repository.workspace?.name || "N/A" } },
                         { "decoratedText": { "topLabel": "Actor", "text": actor.display_name || "N/A" } },
                         { "decoratedText": { "topLabel": "Project", "text": repository.name || "N/A" } }
                     ]
@@ -174,7 +218,7 @@ export class Hooks {
                     "widgets": [
                         { "textParagraph": { "text": `<b>${commitMessage.trim()}</b>` } },
                         { "decoratedText": { "topLabel": "Hash", "text": `<code>${commitHash.substring(0, 7)}</code>` } },
-                        { "decoratedText": { "topLabel": "Time", "text": commitDate } },
+                        { "decoratedText": { "topLabel": "Time", "text": this.formatTimestamp(commitDate) } },
                         {
                             "buttonList": {
                                 "buttons": [
@@ -190,7 +234,7 @@ export class Hooks {
                             "buttonList": {
                                 "buttons": [
                                     { "text": "Open BitBucket", "onClick": { "openLink": { "url": repoLink } } },
-                                    { "text": "User Profile", "onClick": { "openLink": { "url": actorLink } } }
+                                    ...(actorLink ? [{ "text": "User Profile", "onClick": { "openLink": { "url": actorLink } } }] : [])
                                 ]
                             }
                         }
