@@ -8,27 +8,27 @@ import {
     GOOGLE_SHEET_ID,
 } from "./config";
 
-// Returns week range as WIB strings (YYYY-MM-DD HH:MM) for string comparison
-// against timestamps already stored in WIB format
+// Runner dijalankan setiap Minggu pukul 08:00.
+// Mengembalikan range minggu sebelumnya: Minggu 00:01 s/d Sabtu 23:59 (WIB).
+// Contoh: runner jalan Minggu 3 Mei 2026 → range 26 Apr 00:01 s/d 2 Mei 23:59.
 function getJakartaWeekRange(): { start: string; end: string; label: string } {
     const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
     const nowJakarta = new Date(Date.now() + JAKARTA_OFFSET_MS);
 
-    const day = nowJakarta.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    const daysFromMonday = day === 0 ? 6 : day - 1;
+    // Minggu lalu = hari ini (Minggu) dikurangi 7 hari
+    const prevSunday = new Date(nowJakarta.getTime() - 7 * 86400000);
+    prevSunday.setUTCHours(0, 1, 0, 0);
 
-    const monday = new Date(nowJakarta.getTime() - daysFromMonday * 86400000);
-    monday.setUTCHours(0, 1, 0, 0);
-
-    const saturday = new Date(monday.getTime() + 5 * 86400000);
-    saturday.setUTCHours(23, 59, 0, 0);
+    // Sabtu kemarin = hari ini dikurangi 1 hari
+    const prevSaturday = new Date(nowJakarta.getTime() - 1 * 86400000);
+    prevSaturday.setUTCHours(23, 59, 0, 0);
 
     const fmt = (d: Date) => d.toISOString().replace("T", " ").substring(0, 16);
 
     return {
-        start: fmt(monday),
-        end:   fmt(saturday),
-        label: `${fmt(monday)} s/d ${fmt(saturday)} WIB`,
+        start: fmt(prevSunday),
+        end:   fmt(prevSaturday),
+        label: `${fmt(prevSunday)} s/d ${fmt(prevSaturday)} WIB`,
     };
 }
 
