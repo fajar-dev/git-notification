@@ -24,13 +24,12 @@ app.post('/webhook/github', async (c) => {
 
         const body = await c.req.json()
         console.log("GitHub Webhook Body received")
-        const githubCommits = Hooks.extractGitHubCommits(body)
-        if (githubCommits.length === 0) {
-            return c.json({ status: 'skipped', reason: 'merge commit' })
-        }
         await Hooks.sendGitHubNotification(body)
         const repoName = body.repository?.full_name || 'unknown'
-        Spreadsheet.logCommits(repoName, githubCommits)
+        const githubCommits = Hooks.extractGitHubCommits(body)
+        if (githubCommits.length > 0) {
+            Spreadsheet.logCommits(repoName, githubCommits)
+        }
         return c.json({ status: 'success', provider: 'github' })
     } catch (error) {
         console.error("GitHub Webhook Error:", error)
@@ -53,13 +52,12 @@ app.post('/webhook/bitbucket', async (c) => {
 
         const body = await c.req.json()
         console.log("BitBucket Webhook Body received")
-        const bitbucketCommits = Hooks.extractBitBucketCommits(body)
-        if (bitbucketCommits.length === 0) {
-            return c.json({ status: 'skipped', reason: 'merge commit' })
-        }
         await Hooks.sendBitBucketNotification(body)
         const repoName = body.repository?.full_name || 'unknown'
-        Spreadsheet.logCommits(repoName, bitbucketCommits)
+        const bitbucketCommits = Hooks.extractBitBucketCommits(body)
+        if (bitbucketCommits.length > 0) {
+            Spreadsheet.logCommits(repoName, bitbucketCommits)
+        }
         return c.json({ status: 'success', provider: 'bitbucket' })
     } catch (error) {
         console.error("BitBucket Webhook Error:", error)
