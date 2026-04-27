@@ -133,18 +133,24 @@ export class Hooks {
         return d.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace('T', ' ')
     }
 
+    private static isMergeCommit(message: string): boolean {
+        return /^merge\b/i.test((message || '').trim())
+    }
+
     static extractGitHubCommits(payload: any): CommitLog[] {
         const branch = payload.ref ? payload.ref.replace("refs/heads/", "") : ''
         const commits: any[] = payload.commits || []
 
-        return commits.map((commit: any) => ({
-            commitId:  commit.id || '',
-            timestamp: this.formatTimestamp(commit.timestamp || ''),
-            message:   commit.message || '',
-            author:    commit.author?.username || commit.author?.name || '',
-            branch,
-            url:       commit.url || '',
-        }))
+        return commits
+            .filter((commit: any) => !this.isMergeCommit(commit.message))
+            .map((commit: any) => ({
+                commitId:  commit.id || '',
+                timestamp: this.formatTimestamp(commit.timestamp || ''),
+                message:   commit.message || '',
+                author:    commit.author?.username || commit.author?.name || '',
+                branch,
+                url:       commit.url || '',
+            }))
     }
 
     static extractBitBucketCommits(payload: any): CommitLog[] {
@@ -154,18 +160,20 @@ export class Hooks {
             const branch = change.new?.name || ''
             const commits: any[] = change.commits?.length ? change.commits : [change.new?.target].filter(Boolean)
 
-            return commits.map((commit: any) => {
-                const author = commit.author?.user?.nickname || commit.author?.user?.display_name || ''
+            return commits
+                .filter((commit: any) => !this.isMergeCommit(commit.message))
+                .map((commit: any) => {
+                    const author = commit.author?.user?.nickname || commit.author?.user?.display_name || ''
 
-                return {
-                    commitId:  commit.hash || '',
-                    timestamp: this.formatTimestamp(commit.date || ''),
-                    message:   (commit.message || '').trim(),
-                    author,
-                    branch,
-                    url:       commit.links?.html?.href || '',
-                }
-            })
+                    return {
+                        commitId:  commit.hash || '',
+                        timestamp: this.formatTimestamp(commit.date || ''),
+                        message:   (commit.message || '').trim(),
+                        author,
+                        branch,
+                        url:       commit.links?.html?.href || '',
+                    }
+                })
         })
     }
 
