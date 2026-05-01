@@ -134,7 +134,7 @@ export class Hooks {
     }
 
     private static isMergeCommit(message: string): boolean {
-        return /^merge\b/i.test((message || '').trim())
+        return /^merged?\b/i.test((message || '').trim())
     }
 
     static extractGitHubCommits(payload: any): CommitLog[] {
